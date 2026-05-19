@@ -283,7 +283,13 @@ const SHEET_ID   = "1wAcKLKY2Xfe03DcbQ_aiwZJtlwxZ4AmXftEuH6X2EhE";
 let transaksi = [];
 let pendingEntries = [];
 
-function todayStr(){ return new Date().toISOString().split("T")[0]; }
+function todayStr(){
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,"0");
+  const d = String(now.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
 function rp(n){ return "Rp "+(parseInt(String(n||0).replace(/[^\d]/g,""),10)||0).toLocaleString("id-ID"); }
 function getRawNum(id){ const el=document.getElementById(id); return el?parseInt(el.value.replace(/[^\d]/g,""),10)||0:0; }
 function cleanTx(t){ return {...t, total_uang:parseInt(String(t.total_uang||0).replace(/[^\d]/g,""),10)||0, ...Object.fromEntries(CHANNELS.map(p=>[p,parseInt(String(t[p]||0).replace(/[^\d]/g,""),10)||0]))}; }
@@ -456,8 +462,10 @@ function tutupPreview(){
 
 function submitTransaksi(){
   if(!pendingEntries.length) return;
-  const now = new Date().toLocaleString("id-ID");
-  pendingEntries = pendingEntries.map(e => ({...e, tanggal_input: now}));
+  const now = new Date();
+  const tglInput = now.toLocaleDateString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric"})
+    + " " + now.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
+  pendingEntries = pendingEntries.map(e => ({...e, tanggal_input: tglInput}));
   transaksi.push(...pendingEntries);
   saveData(); buildForms();
   document.getElementById("preview-modal").className="modal-overlay";
