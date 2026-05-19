@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#f59e0b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pembukuan Tahu">
+<meta name="description" content="Aplikasi pembukuan usaha tahu harian">
+<link rel="manifest" id="manifest-link">
+<title>Pembukuan Tahu</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:Arial,sans-serif;background:#fffbeb;min-height:100vh;padding-bottom:70px;max-width:480px;margin:0 auto}
+  .header{background:#f59e0b;color:white;padding:14px 16px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .header-row{display:flex;justify-content:space-between;align-items:center}
+  .header h1{font-size:18px;font-weight:700}
+  .content{padding:14px 14px 0}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .card{border-radius:12px;padding:10px}
+  .card .c-label{font-size:10px;opacity:.65;margin-bottom:2px}
+  .card .c-val{font-size:11px;font-weight:700}
+  .card.masuk{background:#dcfce7;color:#166534}
+  .card.keluar{background:#fee2e2;color:#991b1b}
+  .card.saldo{background:#dbeafe;color:#1e40af}
+  .card.saldo.neg{background:#ffedd5;color:#9a3412}
+  .section-title{font-size:13px;font-weight:600;color:#555;margin-bottom:8px}
+  .tx-item{background:white;border-radius:12px;padding:12px;margin-bottom:8px;border-left:4px solid #ccc;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .tx-item.masuk{border-left-color:#22c55e}
+  .tx-item.keluar{border-left-color:#ef4444}
+  .tx-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .tx-name{font-size:13px;font-weight:600;color:#333}
+  .tx-sub{font-size:11px;color:#aaa;margin-top:2px}
+  .tx-amount{font-size:13px;font-weight:700;white-space:nowrap}
+  .tx-amount.masuk{color:#16a34a}
+  .tx-amount.keluar{color:#dc2626}
+  .tx-del{font-size:10px;color:#ddd;cursor:pointer;display:block;text-align:right;margin-top:2px}
+  .tx-del:active{color:#f87171}
+  .empty{text-align:center;padding:40px 0;color:#ccc}
+  .rekap-box{background:white;border-radius:12px;padding:12px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .rekap-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid #f3f4f6}
+  .rekap-row:last-child{border:none}
+  .date-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .date-row label{font-size:12px;color:#777;white-space:nowrap}
+  .date-row input{flex:1;border:1px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:13px;background:white}
+  .tab-toggle{display:flex;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;margin-bottom:14px}
+  .tab-toggle button{flex:1;padding:10px;font-size:13px;font-weight:600;border:none;background:white;color:#999;cursor:pointer}
+  .tab-toggle button.active-k{background:#ef4444;color:white}
+  .tab-toggle button.active-m{background:#22c55e;color:white}
+  .form-card{background:white;border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .form-card .fc-title{font-size:13px;font-weight:600;color:#444;margin-bottom:8px}
+  .field-row{display:flex;gap:8px;margin-bottom:8px}
+  .field{flex:1}
+  .field label{font-size:11px;color:#aaa;display:block;margin-bottom:3px}
+  .field input{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;font-size:13px}
+  .field input:focus{outline:none;border-color:#f59e0b}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .total-bar{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:13px;color:#166534;font-weight:600;text-align:center;margin-bottom:8px}
+  .btn-preview{width:100%;background:#0ea5e9;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+  .btn-preview:active{background:#0284c7}
+  .btn-pdf{flex:1;background:#2563eb;color:white;border:none;border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer}
+  .btn-pdf.bulanan{background:#7c3aed}
+  .summary-box{background:white;border-radius:12px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .sum-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid #f3f4f6}
+  .sum-row:last-child{border:none;padding-top:8px}
+  .sum-row.total{font-weight:700;font-size:14px}
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:white;border-top:1px solid #f3f4f6;display:flex;box-shadow:0 -2px 10px rgba(0,0,0,.08);z-index:10}
+  .nav-btn{flex:1;padding:10px 0 8px;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:#bbb;font-size:10px;font-weight:600}
+  .nav-btn .nav-icon{font-size:22px}
+  .nav-btn.active{color:#f59e0b}
+  .toast{position:fixed;top:14px;left:14px;right:14px;max-width:452px;margin:0 auto;background:#166534;color:white;border-radius:12px;padding:11px 16px;font-size:13px;font-weight:600;text-align:center;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.2);display:none}
+  .toast.warn{background:#d97706}
+  .toast.show{display:block}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:none;align-items:flex-end;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal{background:white;border-radius:20px 20px 0 0;padding:20px 16px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
+  .modal-title{font-size:16px;font-weight:700;color:#333;margin-bottom:4px}
+  .modal-sub{font-size:12px;color:#aaa;margin-bottom:14px}
+  .preview-item{background:#f8fafc;border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:4px solid #f59e0b}
+  .preview-item.masuk{border-left-color:#22c55e}
+  .preview-item .pi-name{font-size:13px;font-weight:600;color:#333}
+  .preview-item .pi-detail{font-size:11px;color:#888;margin-top:3px}
+  .preview-item .pi-amount{font-size:14px;font-weight:700;color:#dc2626;margin-top:4px}
+  .preview-item .pi-amount.masuk{color:#16a34a}
+  .preview-total{background:#fef3c7;border-radius:10px;padding:10px 14px;margin:10px 0;display:flex;justify-content:space-between;align-items:center}
+  .preview-total span{font-size:13px;color:#92400e;font-weight:600}
+  .preview-total strong{font-size:15px;color:#d97706}
+  .modal-actions{display:flex;gap:10px;margin-top:14px}
+  .btn-back{flex:1;background:#f3f4f6;color:#555;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer}
+  .btn-submit{flex:2;background:#16a34a;color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer}
+  .preview-badge{display:inline-block;background:#fef3c7;color:#d97706;border-radius:6px;font-size:10px;font-weight:700;padding:2px 7px;margin-left:6px;vertical-align:middle}
+  /* Install banner */
+  .install-banner{background:#1d4ed8;color:white;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .install-banner p{font-size:12px;line-height:1.4}
+  .install-banner button{background:white;color:#1d4ed8;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .install-banner .close-btn{background:transparent;color:white;border:none;font-size:18px;cursor:pointer;padding:0 4px}
+</style>
+</head>
+<body>
+
+<!-- Install Banner -->
+<div class="install-banner" id="install-banner" style="display:none">
+  <p>📲 Install aplikasi ini di HP kamu!</p>
+  <button onclick="installApp()">Install</button>
+  <button class="close-btn" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Preview Modal -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal">
+    <div class="modal-title">🔍 Preview Transaksi</div>
+    <div class="modal-sub">Periksa data sebelum dikirim</div>
+    <div id="preview-content"></div>
+    <div class="modal-actions">
+      <button class="btn-back" onclick="tutupPreview()">✏️ Kembali Edit</button>
+      <button class="btn-submit" onclick="submitTransaksi()">✅ Kirim Data</button>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <div class="header-row">
+    <div>
+      <h1>🥢 Pembukuan Tahu</h1>
+      <div style="font-size:11px;opacity:.75;margin-top:2px" id="save-status">Memuat data...</div>
+    </div>
+    <div>
+      <div style="font-size:11px;opacity:.8;text-align:right">Saldo Hari Ini</div>
+      <div style="font-size:16px;font-weight:700" id="header-saldo">Rp 0</div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="content" id="page-dashboard">
+  <div class="date-row" style="margin-bottom:10px">
+    <label>📅 Tanggal:</label>
+    <input type="date" id="filter-date">
+  </div>
+  <div class="cards">
+    <div class="card masuk"><div class="c-label">Masuk</div><div class="c-val" id="d-masuk">Rp 0</div></div>
+    <div class="card keluar"><div class="c-label">Keluar</div><div class="c-val" id="d-keluar">Rp 0</div></div>
+    <div class="card saldo" id="d-saldo-card"><div class="c-label">Saldo</div><div class="c-val" id="d-saldo">Rp 0</div></div>
+  </div>
+  <div class="section-title">Transaksi Hari Ini</div>
+  <div id="tx-list"></div>
+  <div id="rekap-section"></div>
+</div>
+
+<!-- INPUT -->
+<div class="content" id="page-input" style="display:none">
+  <div style="font-size:15px;font-weight:700;color:#444;margin-bottom:12px">
+    Input Transaksi
+    <span class="preview-badge">Preview sebelum kirim</span>
+  </div>
+  <div class="date-row">
+    <label>📅 Tanggal:</label>
+    <input type="date" id="input-date">
+  </div>
+  <div class="tab-toggle">
+    <button id="btn-tab-k" class="active-k" onclick="setInputTab('keluar')">❌ Keluar</button>
+    <button id="btn-tab-m" onclick="setInputTab('masuk')">✅ Masuk</button>
+  </div>
+  <div id="form-keluar"></div>
+  <div id="form-masuk" style="display:none"></div>
+  <button class="btn-preview" onclick="bukaPrev()">🔍 Preview & Kirim</button>
+</div>
+
+<!-- LAPORAN -->
+<div class="content" id="page-laporan" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-size:15px;font-weight:700;color:#444">Laporan & Export</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="ambilDariSheets()" style="background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer">🔄 Ambil Sheets</button>
+
+    </div>
+  </div>
+  <div class="date-row">
+    <label>📅 Tanggal:</label>
+    <input type="date" id="lap-date">
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="btn-pdf" onclick="exportPDF('harian')">📅 Print Harian</button>
+    <button class="btn-pdf bulanan" onclick="exportPDF('bulanan')">📆 Print Bulanan</button>
+  </div>
+  <div class="summary-box">
+    <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px">📊 Ringkasan Bulan Ini</div>
+    <div id="lap-summary"></div>
+  </div>
+  <div id="lap-rekap" style="margin-top:10px"></div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-dashboard" onclick="setTab('dashboard')"><span class="nav-icon">🏠</span>Dashboard</button>
+  <button class="nav-btn" id="nav-input" onclick="setTab('input')"><span class="nav-icon">✏️</span>Input</button>
+  <button class="nav-btn" id="nav-laporan" onclick="setTab('laporan')"><span class="nav-icon">📄</span>Laporan</button>
+</div>
+
+<script>
+// ── PWA: Manifest & Service Worker inline ────────────────────────────
+const MANIFEST = {
+  name: "Pembukuan Tahu",
+  short_name: "Tahu",
+  description: "Aplikasi pembukuan usaha tahu harian",
+  start_url: "./",
+  display: "standalone",
+  background_color: "#fffbeb",
+  theme_color: "#f59e0b",
+  orientation: "portrait",
+  icons: [
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23f59e0b'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle'%3E🥢%3C/text%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" },
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23f59e0b'/%3E%3Ctext x='256' y='360' font-size='280' text-anchor='middle'%3E🥢%3C/text%3E%3C/svg%3E", sizes: "512x512", type: "image/svg+xml" }
+  ]
+};
+
+// Inject manifest as blob
+const manifestBlob = new Blob([JSON.stringify(MANIFEST)], {type:"application/json"});
+const manifestURL = URL.createObjectURL(manifestBlob);
+document.getElementById("manifest-link").href = manifestURL;
+
+// Register Service Worker inline via blob
+const SW_CODE = `
+const CACHE = 'pembukuan-tahu-v1';
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(clients.claim());
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
+});
+`;
+if('serviceWorker' in navigator){
+  const swBlob = new Blob([SW_CODE], {type:'application/javascript'});
+  const swURL = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL).catch(()=>{});
+}
+
+// PWA Install prompt
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').style.display = 'none';
+  showToast('✅ Aplikasi berhasil diinstall!');
+});
+function installApp(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; });
+  document.getElementById('install-banner').style.display='none';
+}
+
+// ── Config ────────────────────────────────────────────────────────────
+const KATEGORI_KELUAR = [
+  {id:"cabe",label:"Pembelian Cabe",satuan:"kg"},
+  {id:"gas",label:"Pembelian Gas",satuan:"tabung"},
+  {id:"kresek_besar",label:"Kresek Besar (24)",satuan:"kg"},
+  {id:"kresek_kecil",label:"Kresek Kecil (15)",satuan:"kg"},
+  {id:"plastik_cabe",label:"Plastik Cabe",satuan:"bungkus"},
+  {id:"minyak",label:"Pembelian Minyak",satuan:"liter"},
+  {id:"tahu_beli",label:"Pembelian Tahu",satuan:"pcs"},
+  {id:"paperbag",label:"Paperbag",satuan:"pcs"},
+  {id:"kardus",label:"Kardus",satuan:"pcs"},
+  {id:"bbm",label:"BBM",satuan:"kali"},
+  {id:"lainnya",label:"Lain-lain",satuan:"kali"},
+];
+const CHANNELS = ["cash","qris","grab","gofood","shopee"];
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzINjpWtJj6v7tZLAKehXQhWrWl9gkHFHK3Av0E6anv3olIP3nd612ayDR7TrWGfsNieg/exec";
+const SHEET_ID   = "1wAcKLKY2Xfe03DcbQ_aiwZJtlwxZ4AmXftEuH6X2EhE";
+
+let transaksi = [];
+let pendingEntries = [];
+
+function todayStr(){ return new Date().toISOString().split("T")[0]; }
+function rp(n){ return "Rp "+(parseInt(String(n||0).replace(/[^\d]/g,""),10)||0).toLocaleString("id-ID"); }
+function getRawNum(id){ const el=document.getElementById(id); return el?parseInt(el.value.replace(/[^\d]/g,""),10)||0:0; }
+function cleanTx(t){ return {...t, total_uang:parseInt(String(t.total_uang||0).replace(/[^\d]/g,""),10)||0, ...Object.fromEntries(CHANNELS.map(p=>[p,parseInt(String(t[p]||0).replace(/[^\d]/g,""),10)||0]))}; }
+
+// ── Google Sheets ─────────────────────────────────────────────────────
+async function syncToSheets(data){
+  try{
+    await fetch(SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"save",sheetId:SHEET_ID,transaksi:data})});
+    document.getElementById("save-status").textContent="✅ Tersimpan di Google Sheets";
+  }catch(e){ document.getElementById("save-status").textContent="⚠️ Gagal sync Sheets (tersimpan lokal)"; }
+}
+
+async function loadFromSheets(){
+  try{
+    document.getElementById("save-status").textContent="🔄 Memuat dari Google Sheets...";
+    const url=SCRIPT_URL+"?action=load&sheetId="+encodeURIComponent(SHEET_ID)+"&t="+Date.now();
+    const res=await fetch(url,{cache:"no-store"});
+    const text=await res.text();
+    const s=text.indexOf("{"),e=text.lastIndexOf("}");
+    if(s===-1||e===-1) throw new Error("Invalid");
+    const json=JSON.parse(text.slice(s,e+1));
+    if(json.transaksi&&json.transaksi.length){
+      transaksi=json.transaksi.map(cleanTx);
+      localStorage.setItem("pembukuan_tahu",JSON.stringify(transaksi));
+      document.getElementById("save-status").textContent="✅ Data dimuat dari Google Sheets";
+    } else {
+      document.getElementById("save-status").textContent="✅ Terhubung ke Google Sheets";
+    }
+  }catch(e){ document.getElementById("save-status").textContent="📴 Offline — data dari lokal"; }
+  renderDashboard();
+}
+
+async function ambilDariSheets(){
+  showToast("🔄 Mengambil data dari Sheets...");
+  document.getElementById("save-status").textContent="🔄 Mengambil data...";
+  try{
+    const url=SCRIPT_URL+"?action=load&sheetId="+encodeURIComponent(SHEET_ID)+"&t="+Date.now();
+    const res=await fetch(url,{cache:"no-store"});
+    const text=await res.text();
+    const s=text.indexOf("{"),e=text.lastIndexOf("}");
+    if(s===-1||e===-1) throw new Error("Invalid");
+    const json=JSON.parse(text.slice(s,e+1));
+    if(json.transaksi&&json.transaksi.length){
+      transaksi=json.transaksi.map(cleanTx);
+      localStorage.setItem("pembukuan_tahu",JSON.stringify(transaksi));
+      document.getElementById("save-status").textContent="✅ Data diperbarui ("+transaksi.length+" transaksi)";
+      showToast("✅ "+transaksi.length+" transaksi berhasil dimuat");
+    } else { showToast("⚠️ Tidak ada data di Google Sheets","warn"); }
+  }catch(e){ showToast("⚠️ Gagal ambil data: "+e.message,"warn"); }
+  renderDashboard(); renderLaporan();
+}
+
+// ── Storage ───────────────────────────────────────────────────────────
+function loadData(){
+  try{ const r=localStorage.getItem("pembukuan_tahu"); if(r) transaksi=JSON.parse(r).map(cleanTx); }catch(e){ transaksi=[]; }
+}
+function saveData(){
+  localStorage.setItem("pembukuan_tahu",JSON.stringify(transaksi));
+  document.getElementById("save-status").textContent="🔄 Menyimpan ke Google Sheets...";
+  syncToSheets(transaksi);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────
+function showToast(msg,type="ok"){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast show"+(type==="warn"?" warn":"");
+  setTimeout(()=>t.className="toast",2800);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────
+function setTab(tab){
+  ["dashboard","input","laporan"].forEach(p=>{
+    document.getElementById("page-"+p).style.display=p===tab?"block":"none";
+    const nb=document.getElementById("nav-"+p);
+    if(nb) nb.className="nav-btn"+(p===tab?" active":"");
+  });
+  if(tab==="dashboard") renderDashboard();
+  if(tab==="laporan") renderLaporan();
+}
+
+// ── Forms ─────────────────────────────────────────────────────────────
+function setInputTab(t){
+  document.getElementById("form-keluar").style.display=t==="keluar"?"block":"none";
+  document.getElementById("form-masuk").style.display=t==="masuk"?"block":"none";
+  document.getElementById("btn-tab-k").className=t==="keluar"?"active-k":"";
+  document.getElementById("btn-tab-m").className=t==="masuk"?"active-m":"";
+}
+
+function buildForms(){
+  let html="";
+  KATEGORI_KELUAR.forEach(k=>{
+    html+=`<div class="form-card"><div class="fc-title">🔸 ${k.label}</div>
+      <div class="field-row">
+        ${k.satuan?`<div class="field"><label>Jumlah (${k.satuan})</label><input type="number" inputmode="decimal" id="jml_${k.id}" placeholder="0"></div>`:""}
+        <div class="field"><label>Nominal (Rp)</label><input type="number" inputmode="numeric" id="nom_${k.id}" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Keterangan</label><input type="text" id="ket_${k.id}" placeholder="Opsional"></div>
+    </div>`;
+  });
+  document.getElementById("form-keluar").innerHTML=html;
+  const ch=CHANNELS.map(p=>`<div class="field"><label>${p.toUpperCase()}</label><input type="number" inputmode="numeric" id="pay_${p}" placeholder="0" oninput="updateTotal()"></div>`).join("");
+  document.getElementById("form-masuk").innerHTML=`
+    <div class="form-card"><div class="fc-title">🔹 Penjualan Tahu</div>
+      <div class="field" style="margin-bottom:10px"><label>Jumlah Tahu (pcs)</label><input type="number" inputmode="numeric" id="pcs" placeholder="0"></div>
+      <div style="font-size:11px;color:#aaa;font-weight:600;margin-bottom:6px">Uang Diterima per Channel:</div>
+      <div class="grid2">${ch}</div>
+      <div class="total-bar" id="total-bar">Total Masuk: Rp 0</div>
+      <div class="field"><label>Keterangan</label><input type="text" id="ket_masuk" placeholder="Opsional"></div>
+    </div>`;
+}
+
+function updateTotal(){
+  const tot=CHANNELS.reduce((s,p)=>s+getRawNum("pay_"+p),0);
+  const el=document.getElementById("total-bar");
+  if(el) el.textContent="Total Masuk: "+rp(tot);
+}
+
+// ── Preview & Submit ──────────────────────────────────────────────────
+function bacaFormEntries(){
+  const tgl=document.getElementById("input-date").value||todayStr();
+  const isKeluar=document.getElementById("form-keluar").style.display!=="none";
+  const entries=[];
+  if(isKeluar){
+    KATEGORI_KELUAR.forEach(k=>{
+      const nom=getRawNum("nom_"+k.id);
+      if(nom) entries.push({id:Date.now()+Math.random(),tanggal:tgl,jenis:"keluar",kategori:k.label,satuan:k.satuan,jumlah_satuan:document.getElementById("jml_"+k.id)?.value||"",total_uang:nom,keterangan:document.getElementById("ket_"+k.id)?.value||""});
+    });
+  } else {
+    const tot=CHANNELS.reduce((s,p)=>s+getRawNum("pay_"+p),0);
+    const pcs=document.getElementById("pcs")?.value||"";
+    if(pcs||tot){
+      const entry={id:Date.now()+Math.random(),tanggal:tgl,jenis:"masuk",kategori:"Penjualan Tahu",jumlah_pcs:pcs,total_uang:tot,keterangan:document.getElementById("ket_masuk")?.value||""};
+      CHANNELS.forEach(p=>{ entry[p]=getRawNum("pay_"+p); });
+      entries.push(entry);
+    }
+  }
+  return entries;
+}
+
+function bukaPrev(){
+  const entries=bacaFormEntries();
+  if(!entries.length){ showToast("⚠️ Isi minimal satu transaksi!","warn"); return; }
+  pendingEntries=entries;
+  let html="",tK=0,tM=0;
+  entries.forEach(e=>{
+    if(e.jenis==="keluar"){
+      tK+=e.total_uang;
+      html+=`<div class="preview-item"><div class="pi-name">🔸 ${e.kategori}</div>
+        <div class="pi-detail">${e.jumlah_satuan?e.jumlah_satuan+" "+e.satuan+" · ":""}Tanggal: ${e.tanggal}${e.keterangan?" · "+e.keterangan:""}</div>
+        <div class="pi-amount">− ${rp(e.total_uang)}</div></div>`;
+    } else {
+      tM+=e.total_uang;
+      const ch=CHANNELS.filter(p=>Number(e[p])>0).map(p=>p.toUpperCase()+" "+rp(e[p])).join(", ");
+      html+=`<div class="preview-item masuk"><div class="pi-name">🔹 ${e.kategori}</div>
+        <div class="pi-detail">${e.jumlah_pcs?e.jumlah_pcs+" pcs · ":""}Tanggal: ${e.tanggal}${e.keterangan?" · "+e.keterangan:""}</div>
+        ${ch?`<div class="pi-detail" style="margin-top:4px">💳 ${ch}</div>`:""}
+        <div class="pi-amount masuk">+ ${rp(e.total_uang)}</div></div>`;
+    }
+  });
+  const tot=tM||tK, lbl=tM?"Total Masuk":"Total Keluar", warna=tM?"#16a34a":"#dc2626";
+  html+=`<div class="preview-total"><span>${lbl}</span><strong style="color:${warna}">${rp(tot)}</strong></div>`;
+  document.getElementById("preview-content").innerHTML=html;
+  document.getElementById("preview-modal").className="modal-overlay show";
+}
+
+function tutupPreview(){
+  document.getElementById("preview-modal").className="modal-overlay";
+  pendingEntries=[];
+}
+
+function submitTransaksi(){
+  if(!pendingEntries.length) return;
+  const now = new Date().toLocaleString("id-ID");
+  pendingEntries = pendingEntries.map(e => ({...e, tanggal_input: now}));
+  transaksi.push(...pendingEntries);
+  saveData(); buildForms();
+  document.getElementById("preview-modal").className="modal-overlay";
+  pendingEntries=[];
+  showToast("✅ Transaksi berhasil disimpan!");
+  setTab("dashboard");
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────
+function renderDashboard(){
+  const date=document.getElementById("filter-date").value||todayStr();
+  const fx=transaksi.filter(t=>t.tanggal===date);
+  const tM=fx.filter(t=>t.jenis==="masuk").reduce((s,t)=>s+t.total_uang,0);
+  const tK=fx.filter(t=>t.jenis==="keluar").reduce((s,t)=>s+t.total_uang,0);
+  const sal=tM-tK;
+  document.getElementById("header-saldo").textContent=rp(sal);
+  document.getElementById("d-masuk").textContent=rp(tM);
+  document.getElementById("d-keluar").textContent=rp(tK);
+  document.getElementById("d-saldo").textContent=rp(sal);
+  document.getElementById("d-saldo-card").className="card "+(sal>=0?"saldo":"saldo neg");
+  let html="";
+  if(!fx.length){
+    html=`<div class="empty"><div style="font-size:36px;margin-bottom:8px">📭</div><div>Belum ada transaksi</div></div>`;
+  } else {
+    fx.slice().reverse().forEach(t=>{
+      const sub=t.jenis==="masuk"?`${t.jumlah_pcs||0} pcs · ${CHANNELS.filter(p=>Number(t[p])>0).map(p=>p.toUpperCase()).join(", ")||"-"}`:`${t.jumlah_satuan||"—"} ${t.satuan||""}`;
+      html+=`<div class="tx-item ${t.jenis}"><div class="tx-row">
+        <div><div class="tx-name">${t.kategori}</div><div class="tx-sub">${sub}</div>${t.keterangan?`<div class="tx-sub" style="font-style:italic">${t.keterangan}</div>`:""}</div>
+        <div><div class="tx-amount ${t.jenis}">${t.jenis==="masuk"?"+":"−"}${rp(t.total_uang)}</div><span class="tx-del" onclick="hapus('${t.id}')">hapus</span></div>
+      </div></div>`;
+    });
+  }
+  document.getElementById("tx-list").innerHTML=html;
+  const bulan=date.slice(0,7);
+  const rek={};
+  transaksi.filter(t=>t.tanggal.startsWith(bulan)&&t.jenis==="keluar"&&t.satuan).forEach(t=>{
+    if(!rek[t.kategori]) rek[t.kategori]={satuan:t.satuan,total:0};
+    rek[t.kategori].total+=parseFloat(t.jumlah_satuan||0);
+  });
+  const pcsBulan=transaksi.filter(t=>t.tanggal.startsWith(bulan)&&t.jenis==="masuk").reduce((s,t)=>s+parseInt(t.jumlah_pcs||0,10),0);
+  let rekHtml="";
+  if(Object.keys(rek).length||pcsBulan){
+    rekHtml=`<div class="rekap-box"><div class="section-title" style="margin-bottom:8px">📦 Rekap Bulan Ini</div>`;
+    if(pcsBulan) rekHtml+=`<div class="rekap-row"><span style="color:#555;font-weight:600">🥢 Tahu Terjual</span><span style="font-weight:700;color:#16a34a">${pcsBulan} pcs</span></div>`;
+    Object.entries(rek).forEach(([k,v])=>{ rekHtml+=`<div class="rekap-row"><span style="color:#555">${k}</span><span style="font-weight:600">${v.total} ${v.satuan}</span></div>`; });
+    rekHtml+=`</div>`;
+  }
+  document.getElementById("rekap-section").innerHTML=rekHtml;
+}
+
+function hapus(id){
+  if(!confirm("Hapus transaksi ini?")) return;
+  transaksi=transaksi.filter(t=>String(t.id)!==String(id));
+  saveData(); renderDashboard();
+}
+
+// ── Laporan ───────────────────────────────────────────────────────────
+function renderLaporan(){
+  const date=document.getElementById("lap-date")?.value||todayStr();
+  const bulan=date.slice(0,7);
+  const btx=transaksi.filter(t=>t.tanggal.startsWith(bulan));
+  const bM=btx.filter(t=>t.jenis==="masuk").reduce((s,t)=>s+t.total_uang,0);
+  const bK=btx.filter(t=>t.jenis==="keluar").reduce((s,t)=>s+t.total_uang,0);
+  const bS=bM-bK;
+  const pcs=btx.filter(t=>t.jenis==="masuk").reduce((s,t)=>s+parseInt(t.jumlah_pcs||0,10),0);
+  document.getElementById("lap-summary").innerHTML=`
+    <div class="sum-row"><span style="color:#888">🥢 Total Tahu Terjual</span><span style="color:#16a34a;font-weight:700">${pcs} pcs</span></div>
+    <div class="sum-row"><span style="color:#888">Total Masuk</span><span style="color:#16a34a;font-weight:600">${rp(bM)}</span></div>
+    <div class="sum-row"><span style="color:#888">Total Keluar</span><span style="color:#dc2626;font-weight:600">${rp(bK)}</span></div>
+    <div class="sum-row total"><span>Saldo Bulan</span><span style="color:${bS>=0?"#1d4ed8":"#dc2626"}">${rp(bS)}</span></div>`;
+  const payTot={};
+  CHANNELS.forEach(p=>{ payTot[p]=btx.filter(t=>t.jenis==="masuk").reduce((s,t)=>s+Number(t[p]||0),0); });
+  let chHtml=`<div class="summary-box"><div style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px">💳 Penjualan per Channel</div>`;
+  CHANNELS.forEach(p=>{ chHtml+=`<div class="sum-row"><span style="color:#888">${p.toUpperCase()}</span><span style="font-weight:600">${rp(payTot[p])}</span></div>`; });
+  chHtml+="</div>";
+  const rek={};
+  btx.filter(t=>t.jenis==="keluar"&&t.satuan).forEach(t=>{
+    if(!rek[t.kategori]) rek[t.kategori]={satuan:t.satuan,total:0};
+    rek[t.kategori].total+=parseFloat(t.jumlah_satuan||0);
+  });
+  let rekHtml="";
+  if(Object.keys(rek).length){
+    rekHtml=`<div class="summary-box" style="margin-top:10px"><div style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px">📦 Rekap Kebutuhan</div>`;
+    Object.entries(rek).forEach(([k,v])=>{ rekHtml+=`<div class="sum-row"><span style="color:#888">${k}</span><span style="font-weight:600">${v.total} ${v.satuan}</span></div>`; });
+    rekHtml+="</div>";
+  }
+  document.getElementById("lap-rekap").innerHTML=chHtml+rekHtml;
+}
+
+
+// ── PDF ───────────────────────────────────────────────────────────────
+function buildLaporanHTML(mode,date){
+  const filtered=transaksi.filter(t=>mode==="harian"?t.tanggal===date:t.tanggal.startsWith(date.slice(0,7)));
+  const tM=filtered.filter(t=>t.jenis==="masuk").reduce((s,t)=>s+t.total_uang,0);
+  const tK=filtered.filter(t=>t.jenis==="keluar").reduce((s,t)=>s+t.total_uang,0);
+  const sal=tM-tK;
+  const pcs=filtered.filter(t=>t.jenis==="masuk").reduce((s,t)=>s+parseInt(t.jumlah_pcs||0,10),0);
+  const payTot={};
+  CHANNELS.forEach(p=>{ payTot[p]=filtered.filter(t=>t.jenis==="masuk").reduce((s,t)=>s+Number(t[p]||0),0); });
+  const rek={};
+  filtered.filter(t=>t.jenis==="keluar"&&t.satuan).forEach(t=>{ const k=t.kategori+" ("+t.satuan+")"; rek[k]=(rek[k]||0)+parseFloat(t.jumlah_satuan||0); });
+  const rows=filtered.length?filtered.map(t=>`<tr><td>${t.tanggal}</td><td style="color:${t.jenis==="masuk"?"green":"red"};font-weight:600">${t.jenis==="masuk"?"Masuk":"Keluar"}</td><td>${t.kategori}</td><td>${t.jumlah_satuan?t.jumlah_satuan+" "+t.satuan:t.jumlah_pcs?t.jumlah_pcs+" pcs":"-"}</td><td style="text-align:right">${rp(t.total_uang)}</td><td>${t.keterangan||""}</td></tr>`).join(""):"<tr><td colspan='6' style='text-align:center;color:#aaa;padding:12px'>Tidak ada data</td></tr>";
+  const rekRows=Object.entries(rek).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+  const chRows=CHANNELS.map(p=>`<td style="text-align:right">${rp(payTot[p])}</td>`).join("");
+  const judul=mode==="harian"?"Laporan Harian — "+date:"Laporan Bulanan — "+date.slice(0,7);
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${judul}</title>
+<style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;padding:16px;font-size:12px;color:#222}h2{border-bottom:3px solid #f59e0b;padding-bottom:6px;color:#333;margin-bottom:12px}h3{margin:14px 0 6px;color:#555;font-size:13px;border-left:3px solid #f59e0b;padding-left:8px}table{width:100%;border-collapse:collapse;margin-bottom:12px}th{background:#f59e0b;color:white;padding:7px 8px;text-align:left;font-size:12px}td{padding:6px 8px;border-bottom:1px solid #eee;font-size:12px}tr:last-child td{border-bottom:none}.pcs-box{background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}.pcs-item .lbl{font-size:10px;color:#92400e;margin-bottom:2px}.pcs-item .val{font-size:20px;font-weight:700;color:#d97706}.divider{width:1px;background:#f59e0b;height:40px}.print-btn{background:#f59e0b;color:white;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:16px;display:block}@media print{.print-btn{display:none}body{padding:8px}}</style>
+</head><body>
+<button class="print-btn" onclick="window.print()">🖨️ Print / Simpan PDF</button>
+<h2>📊 Pembukuan Tahu</h2><p style="color:#666;margin-bottom:10px"><b>${judul}</b></p>
+<div class="pcs-box">
+  <div class="pcs-item"><div class="lbl">Total Tahu Terjual</div><div class="val">${pcs} <span style="font-size:13px">pcs</span></div></div>
+  <div class="divider"></div>
+  <div class="pcs-item"><div class="lbl">Total Pendapatan</div><div class="val" style="color:#16a34a;font-size:16px">${rp(tM)}</div></div>
+  <div class="divider"></div>
+  <div class="pcs-item"><div class="lbl">Total Pengeluaran</div><div class="val" style="color:#dc2626;font-size:16px">${rp(tK)}</div></div>
+  <div class="divider"></div>
+  <div class="pcs-item"><div class="lbl">Saldo</div><div class="val" style="color:${sal>=0?"#1d4ed8":"#dc2626"};font-size:16px">${rp(sal)}</div></div>
+</div>
+<h3>Detail Transaksi</h3>
+<table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Satuan</th><th>Nominal</th><th>Keterangan</th></tr></thead><tbody>${rows}</tbody></table>
+${rekRows?`<h3>Rekap Kebutuhan</h3><table><thead><tr><th>Item</th><th>Total</th></tr></thead><tbody>${rekRows}</tbody></table>`:""}
+<h3>Penjualan per Channel</h3>
+<table><thead><tr>${CHANNELS.map(p=>"<th>"+p.toUpperCase()+"</th>").join("")}</tr></thead><tbody><tr>${chRows}</tr></tbody></table>
+</body></html>`;
+}
+
+function exportPDF(mode){
+  const date=document.getElementById("lap-date")?.value||todayStr();
+  const html=buildLaporanHTML(mode,date);
+  const encoded="data:text/html;charset=utf-8,"+encodeURIComponent(html);
+  const a=document.createElement("a"); a.href=encoded;
+  a.download="laporan-tahu-"+(mode==="harian"?date:date.slice(0,7))+".html";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast("✅ File laporan didownload, buka lalu print");
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+loadData();
+const td=todayStr();
+document.getElementById("filter-date").value=td;
+document.getElementById("input-date").value=td;
+document.getElementById("lap-date").value=td;
+document.getElementById("filter-date").addEventListener("change",renderDashboard);
+document.getElementById("lap-date").addEventListener("change",renderLaporan);
+buildForms();
+renderDashboard();
+loadFromSheets();
+</script>
+</body>
+</html>
